@@ -2,6 +2,7 @@ import React, {
   ChangeEventHandler,
   FormEventHandler,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -48,6 +49,8 @@ const JobCreator: React.FC = () => {
     []
   );
 
+  useEffect(() => ref.current?.focus(), []);
+
   const handleSubmit = useCallback<FormEventHandler>(
     (e) => {
       if (isValid) {
@@ -65,7 +68,7 @@ const JobCreator: React.FC = () => {
     <Form className={`${classes.form} mb-3`} onSubmit={handleSubmit}>
       <Row className="d-flex align-items-center mb-2">
         <Col className="mb-1" xs={4}>
-          <label className={classes.label}>Poll Name:</label>
+          <label className={classes.label}>Project Name:</label>
         </Col>
         <Col className="mb-1" xs={8}>
           <FormControl
