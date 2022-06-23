@@ -46,7 +46,6 @@ const JobContext = createContext<IContext>({
 });
 
 enum ActionType {
-  Set = "Set",
   Create = "Create",
   Start = "Start",
   Finish = "Finish",
@@ -60,9 +59,6 @@ type Reducer = (
 
 const reducer: Reducer = (state, { type, payload }) => {
   switch (type) {
-    case ActionType.Set:
-      return payload?.jobs;
-
     case ActionType.Create:
       return [
         ...state,
