@@ -25,26 +25,28 @@ export interface IJob extends IJobDescription {
   updatedAt: Date;
 }
 
-type Setter = (_: IJob[]) => void;
-type CreateFunc = (_: IJobDescription) => void;
+type JobSetter = (_: IJob[]) => void;
+type JobCreator = (_: IJobDescription) => void;
 export type JobHandler = (_: number) => void;
 
 interface IContext {
   jobs: IJob[];
-  setJobs: Setter;
-  createJob: CreateFunc;
+  createJob: JobCreator;
   startJob: JobHandler;
   finishJob: JobHandler;
   removeJob: JobHandler;
+  loadFromLocalStorage: () => void;
+  saveToLocalStorage: () => void;
 }
 
 const JobContext = createContext<IContext>({
   jobs: [],
-  setJobs: () => {},
   createJob: () => {},
   startJob: () => {},
   finishJob: () => {},
   removeJob: () => {},
+  loadFromLocalStorage: () => {},
+  saveToLocalStorage: () => {},
 });
 
 enum ActionType {
@@ -102,12 +104,12 @@ export const JobProvider: React.FC<any> = (props) => {
   const [jobs, dispatch] = useReducer<Reducer>(reducer, []);
   const [nextId, setNextId] = useState<number>(0);
 
-  const setJobs = useCallback<Setter>((jobs) => {
+  const setJobs = useCallback<JobSetter>((jobs) => {
     setNextId(jobs.length > 0 ? 1 + Math.max(...jobs.map(({ id }) => id)) : 0);
     dispatch({ type: ActionType.Set, payload: { jobs } });
   }, []);
 
-  const createJob = useCallback<CreateFunc>(
+  const createJob = useCallback<JobCreator>(
     (newJob) => {
       dispatch({ type: ActionType.Create, payload: { id: nextId, ...newJob } });
       setNextId((prev) => prev + 1);
@@ -130,9 +132,34 @@ export const JobProvider: React.FC<any> = (props) => {
     []
   );
 
+  const loadFromLocalStorage = useCallback(() => {
+    const ls = window.localStorage.getItem("job-man");
+    try {
+      if (ls === null) {
+        throw new Error();
+      }
+      setJobs(JSON.parse(ls));
+    } catch (err) {
+      window.localStorage.removeItem("job-man");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const saveToLocalStorage = useCallback(() => {
+    window.localStorage.setItem("job-man", JSON.stringify(jobs));
+  }, [jobs]);
+
   return (
     <JobContext.Provider
-      value={{ jobs, setJobs, createJob, startJob, finishJob, removeJob }}
+      value={{
+        jobs,
+        createJob,
+        startJob,
+        finishJob,
+        removeJob,
+        loadFromLocalStorage,
+        saveToLocalStorage,
+      }}
       {...props}
     />
   );
