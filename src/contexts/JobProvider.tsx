@@ -1,10 +1,11 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useReducer,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext } from "react";
+// @ts-ignore
+import createPersistedReducer from "use-persisted-reducer";
+// @ts-ignore
+import createPersistedState from "use-persisted-state";
+
+const usePersistedJobsReducer = createPersistedReducer("jobs");
+const usePersistedNextIdState = createPersistedState("nextId");
 
 export enum Status {
   NotStarted = "Not started",
@@ -25,8 +26,7 @@ export interface IJob extends IJobDescription {
   updatedAt: Date;
 }
 
-type JobSetter = (_: IJob[]) => void;
-type JobCreator = (_: IJobDescription) => void;
+export type JobCreator = (_: IJobDescription) => void;
 export type JobHandler = (_: number) => void;
 
 interface IContext {
@@ -35,8 +35,6 @@ interface IContext {
   startJob: JobHandler;
   finishJob: JobHandler;
   removeJob: JobHandler;
-  loadFromLocalStorage: () => void;
-  saveToLocalStorage: () => void;
 }
 
 const JobContext = createContext<IContext>({
@@ -45,8 +43,6 @@ const JobContext = createContext<IContext>({
   startJob: () => {},
   finishJob: () => {},
   removeJob: () => {},
-  loadFromLocalStorage: () => {},
-  saveToLocalStorage: () => {},
 });
 
 enum ActionType {
@@ -101,65 +97,38 @@ const reducer: Reducer = (state, { type, payload }) => {
 };
 
 export const JobProvider: React.FC<any> = (props) => {
-  const [jobs, dispatch] = useReducer<Reducer>(reducer, []);
-  const [nextId, setNextId] = useState<number>(0);
-
-  const setJobs = useCallback<JobSetter>((jobs) => {
-    setNextId(jobs.length > 0 ? 1 + Math.max(...jobs.map(({ id }) => id)) : 0);
-    dispatch({ type: ActionType.Set, payload: { jobs } });
-  }, []);
+  const [jobs, dispatch] = usePersistedJobsReducer<Reducer>(reducer, []);
+  const [nextId, setNextId] = usePersistedNextIdState<number>(0);
 
   const createJob = useCallback<JobCreator>(
     (newJob) => {
       dispatch({ type: ActionType.Create, payload: { id: nextId, ...newJob } });
-      setNextId((prev) => prev + 1);
-    },
+      setNextId(nextId + 1);
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
     [nextId]
   );
 
   const startJob = useCallback<JobHandler>(
     (id) => dispatch({ type: ActionType.Start, payload: { id } }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
   const finishJob = useCallback<JobHandler>(
     (id) => dispatch({ type: ActionType.Finish, payload: { id } }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
   const removeJob = useCallback<JobHandler>(
     (id) => dispatch({ type: ActionType.Remove, payload: { id } }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
-  const loadFromLocalStorage = useCallback(() => {
-    const ls = window.localStorage.getItem("job-man");
-    try {
-      if (ls === null) {
-        throw new Error();
-      }
-      setJobs(JSON.parse(ls));
-    } catch (err) {
-      window.localStorage.removeItem("job-man");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const saveToLocalStorage = useCallback(() => {
-    window.localStorage.setItem("job-man", JSON.stringify(jobs));
-  }, [jobs]);
-
   return (
     <JobContext.Provider
-      value={{
-        jobs,
-        createJob,
-        startJob,
-        finishJob,
-        removeJob,
-        loadFromLocalStorage,
-        saveToLocalStorage,
-      }}
+      value={{ jobs, createJob, startJob, finishJob, removeJob }}
       {...props}
     />
   );

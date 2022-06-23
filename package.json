@@ -12,6 +12,8 @@
     "react-inlinesvg": "^3.0.0",
     "react-router-dom": "^6.3.0",
     "sass": "^1.52.3",
+    "use-persisted-reducer": "^2.1.0",
+    "use-persisted-state": "^0.3.3",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
