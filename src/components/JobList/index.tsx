@@ -73,7 +73,7 @@ const JobList: React.FC = () => {
   const [orderBy, setOrderBy] = useState<string>("id");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [confirmText, setConfirmText] = useState<ConfirmText>();
-  const [handleAction, setActionHandler] = useState<() => void>(() => {});
+  const [handleAction, setActionHandler] = useState<() => void>(() => () => {});
 
   const showModal = useCallback(() => setModalVisible(true), []);
   const closeModal = useCallback(() => setModalVisible(false), []);
