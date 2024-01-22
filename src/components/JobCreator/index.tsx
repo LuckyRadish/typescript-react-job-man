@@ -40,7 +40,10 @@ const JobCreator: React.FC = () => {
   const { createJob } = useJobs();
   const [newJob, setNewJob] = useState<IJobDescription>(initialValue);
 
-  const isValid = useMemo(() => !!newJob.title && !!newJob.client, [newJob]);
+  const isValid = useMemo<boolean>(
+    () => !!newJob.title && !!newJob.client,
+    [newJob]
+  );
 
   const handleChange = useCallback<ChangeEventHandler<HTMLInputElement>>(
     ({ target: { name, value } }) => {
